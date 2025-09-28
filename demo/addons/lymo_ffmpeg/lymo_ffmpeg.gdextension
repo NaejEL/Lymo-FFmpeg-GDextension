@@ -1,0 +1,23 @@
+[configuration]
+
+entry_symbol = "gdextension_initialize"
+compatibility_minimum = "4.2"
+reloadable = true
+
+[libraries]
+
+linux.debug.x86_64 = "bin/lymo_ffmpeg.so"
+linux.release.x86_64 = "bin/lymo_ffmpeg.so"
+windows.debug.x86_64 = "bin/lymo_ffmpeg.dll"
+windows.release.x86_64 = "bin/lymo_ffmpeg.dll"
+macos.debug = "bin/lymo_ffmpeg.dylib"
+macos.release = "bin/lymo_ffmpeg.dylib"
+
+[dependencies]
+
+linux.debug.x86_64 = {}
+linux.release.x86_64 = {}
+windows.debug.x86_64 = {}
+windows.release.x86_64 = {}
+macos.debug = {}
+macos.release = {}
