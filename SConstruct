@@ -101,31 +101,83 @@ env.Append(CPPPATH=[
     env["godot_cpp_path"] + "/gen/include/",
 ])
 
-# FFmpeg configuration
-ffmpeg_include = env["ffmpeg_path"] + "/include"
-ffmpeg_lib = env["ffmpeg_path"] + "/lib"
+# FFmpeg configuration using pkg-config
+def configure_ffmpeg(env):
+    # Core FFmpeg libraries (required)
+    core_ffmpeg_libs = [
+        "libavcodec", "libavformat", "libavutil", "libswscale", "libswresample", "libavfilter", "libavdevice"
+    ]
+    
+    # Optional codec libraries for maximum format support
+    optional_codec_libs = [
+        "vpx",        # VP8/VP9 codec
+        "x264",       # H.264 encoder
+        "x265",       # H.265/HEVC encoder  
+        "opus",       # Opus audio codec
+        "vorbis",     # Vorbis audio codec
+        "theora",     # Theora video codec
+        "lame",       # MP3 encoder
+        "aom",        # AV1 encoder
+        "dav1d"       # AV1 decoder
+    ]
+    
+    # Check if pkg-config is available
+    try:
+        # Configure core FFmpeg libraries
+        for lib in core_ffmpeg_libs:
+            result = subprocess.run(["pkg-config", "--exists", lib], capture_output=True)
+            if result.returncode == 0:
+                cflags = subprocess.run(["pkg-config", "--cflags", lib], capture_output=True, text=True).stdout.strip()
+                libs = subprocess.run(["pkg-config", "--libs", lib], capture_output=True, text=True).stdout.strip()
+                
+                if cflags:
+                    env.MergeFlags(cflags)
+                if libs:
+                    env.MergeFlags(libs)
+                print(f"✓ Found {lib}")
+            else:
+                print(f"✗ Warning: {lib} not found via pkg-config")
+        
+        # Configure optional codec libraries
+        for lib in optional_codec_libs:
+            result = subprocess.run(["pkg-config", "--exists", lib], capture_output=True)
+            if result.returncode == 0:
+                cflags = subprocess.run(["pkg-config", "--cflags", lib], capture_output=True, text=True).stdout.strip()
+                libs = subprocess.run(["pkg-config", "--libs", lib], capture_output=True, text=True).stdout.strip()
+                
+                if cflags:
+                    env.MergeFlags(cflags)
+                if libs:
+                    env.MergeFlags(libs)
+                print(f"✓ Found optional codec: {lib}")
+            else:
+                print(f"ℹ Optional codec {lib} not available")
+                
+    except FileNotFoundError:
+        print("Warning: pkg-config not found, falling back to manual configuration")
+        # Fallback to manual FFmpeg configuration
+        ffmpeg_include = env["ffmpeg_path"] + "/include"
+        ffmpeg_lib = env["ffmpeg_path"] + "/lib"
+        
+        if os.path.exists(ffmpeg_include):
+            env.Append(CPPPATH=[ffmpeg_include])
+        else:
+            print("Warning: FFmpeg include path not found:", ffmpeg_include)
+        
+        if os.path.exists(ffmpeg_lib):
+            env.Append(LIBPATH=[ffmpeg_lib])
+        else:
+            print("Warning: FFmpeg lib path not found:", ffmpeg_lib)
+        
+        # Basic FFmpeg libraries
+        ffmpeg_libs = ["avcodec", "avformat", "avutil", "swscale", "swresample"]
+        env.Append(LIBS=ffmpeg_libs)
 
-if os.path.exists(ffmpeg_include):
-    env.Append(CPPPATH=[ffmpeg_include])
-else:
-    print("Warning: FFmpeg include path not found:", ffmpeg_include)
+    # Windows-specific libraries
+    if env["platform"] == "windows":
+        env.Append(LIBS=["ws2_32", "secur32", "bcrypt", "mfplat", "mfuuid", "strmiids"])
 
-if os.path.exists(ffmpeg_lib):
-    env.Append(LIBPATH=[ffmpeg_lib])
-else:
-    print("Warning: FFmpeg lib path not found:", ffmpeg_lib)
-
-# FFmpeg libraries
-ffmpeg_libs = [
-    "avcodec", "avformat", "avutil", "swscale", "swresample"
-]
-
-if env["platform"] == "windows":
-    env.Append(LIBS=ffmpeg_libs)
-    env.Append(LIBS=["ws2_32", "secur32", "bcrypt", "mfplat", "mfuuid", "strmiids"])
-else:
-    for lib in ffmpeg_libs:
-        env.Append(LIBS=[lib])
+configure_ffmpeg(env)
 
 # Godot-cpp library
 godot_cpp_lib = env["godot_cpp_path"] + "/bin/"
