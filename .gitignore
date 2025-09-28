@@ -14,3 +14,42 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Build artifacts
+bin/
+.sconsign.dblite
+
+# FFmpeg libraries (downloaded separately)
+thirdparty/ffmpeg/
+
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Static libraries
+*.a
+*.lib
+
+# Debug files
+*.pdb
+*.ilk
+
+# Temporary files
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+*.log
